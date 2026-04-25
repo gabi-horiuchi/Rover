@@ -17,18 +17,28 @@ FPS = 60
 
 GRID_COLS = 12
 GRID_ROWS = 12
-CELL = 40
+CELL = 38
 
-GRID_X = 40
-GRID_Y = 90
+MARGEM = 40
+GRID_X = MARGEM
+GRID_Y = 88
 
 GRID_W = GRID_COLS * CELL
 GRID_H = GRID_ROWS * CELL
 
-PAINEL_X = GRID_X + GRID_W + 30
-PAINEL_Y = 90
-PAINEL_W = LARGURA - PAINEL_X - 40
-PAINEL_H = 485
+GAP = 30
+PAINEL_X = GRID_X + GRID_W + GAP
+PAINEL_Y = GRID_Y
+PAINEL_W = LARGURA - PAINEL_X - MARGEM
+PAINEL_H = 480
+
+LEGENDA_Y = GRID_Y + GRID_H + 14
+LEGENDA_H = 88
+
+BTN_Y = PAINEL_Y + PAINEL_H + 18
+BTN_W = 150
+BTN_H = 42
+BTN_GAP = 15
 
 
 COR_FUNDO = (18, 18, 35)
@@ -78,11 +88,6 @@ REPEAT 2 {
 }
 DETECT
 RECUA 1
-AVANCA 1
-RIGHT
-AVANCA 1
-LEFT
-AVANCA 1
 """
 
 
@@ -168,7 +173,7 @@ def desenhar_painel(tela, script, sim, scroll_script=0):
     titulo = FONTE_TITULO.render("SCRIPT", True, COR_TEXTO)
     tela.blit(titulo, (PAINEL_X, 35))
 
-    editor = pygame.Rect(PAINEL_X + 12, PAINEL_Y + 12, PAINEL_W - 24, 205)
+    editor = pygame.Rect(PAINEL_X + 12, PAINEL_Y + 12, PAINEL_W - 24, 200)
     pygame.draw.rect(tela, COR_EDITOR, editor, border_radius=10)
     pygame.draw.rect(tela, COR_PAINEL_BORDA, editor, 1, border_radius=10)
 
@@ -204,9 +209,9 @@ def desenhar_painel(tela, script, sim, scroll_script=0):
     tela.blit(seta, (editor.x + editor.w - 35, editor.y + editor.h - 25))
 
     status_txt = FONTE_MEDIA.render(sim.status[:58], True, sim.cor_status)
-    tela.blit(status_txt, (PAINEL_X + 12, PAINEL_Y + 228))
+    tela.blit(status_txt, (PAINEL_X + 12, PAINEL_Y + 222))
 
-    estado_box = pygame.Rect(PAINEL_X + 12, PAINEL_Y + 260, PAINEL_W - 24, 82)
+    estado_box = pygame.Rect(PAINEL_X + 12, PAINEL_Y + 252, PAINEL_W - 24, 82)
     pygame.draw.rect(tela, (18, 20, 28), estado_box, border_radius=10)
     pygame.draw.rect(tela, COR_PAINEL_BORDA, estado_box, 1, border_radius=10)
 
@@ -220,7 +225,7 @@ def desenhar_painel(tela, script, sim, scroll_script=0):
         render = FONTE_MEDIA.render(info, True, COR_TEXTO)
         tela.blit(render, (estado_box.x + 10, estado_box.y + 8 + idx * 23))
 
-    log_box = pygame.Rect(PAINEL_X + 12, PAINEL_Y + 355, PAINEL_W - 24, 110)
+    log_box = pygame.Rect(PAINEL_X + 12, PAINEL_Y + 344, PAINEL_W - 24, 118)
     pygame.draw.rect(tela, COR_LOG, log_box, border_radius=10)
     pygame.draw.rect(tela, COR_PAINEL_BORDA, log_box, 1, border_radius=10)
 
@@ -235,7 +240,7 @@ def desenhar_painel(tela, script, sim, scroll_script=0):
 
 
 def desenhar_legenda(tela):
-    legenda_box = pygame.Rect(GRID_X, GRID_Y + GRID_H + 15, GRID_W, 75)
+    legenda_box = pygame.Rect(GRID_X, LEGENDA_Y, GRID_W, LEGENDA_H)
 
     pygame.draw.rect(tela, (16, 18, 26), legenda_box, border_radius=10)
     pygame.draw.rect(tela, COR_PAINEL_BORDA, legenda_box, 1, border_radius=10)
@@ -249,7 +254,7 @@ def desenhar_legenda(tela):
 
     tela.blit(FONTE_PEQUENA.render(linha1, True, COR_SUB), (legenda_box.x + 12, legenda_box.y + 30))
     tela.blit(FONTE_PEQUENA.render(linha2, True, COR_SUB), (legenda_box.x + 12, legenda_box.y + 48))
-    tela.blit(FONTE_PEQUENA.render(linha3, True, COR_SUB), (legenda_box.x + 12, legenda_box.y + 64))
+    tela.blit(FONTE_PEQUENA.render(linha3, True, COR_SUB), (legenda_box.x + 12, legenda_box.y + 66))
 
 
 def desenhar_tela_inicial(tela, mouse_pos, btn_iniciar, btn_sair):
@@ -340,12 +345,10 @@ def tela_jogo():
     scroll_script = 0
     simulador = SimuladorRover()
 
-    btn_y = 610
-    btn_h = 42
-
-    btn_reset = Botao(PAINEL_X, btn_y, 160, btn_h, "Reset")
-    btn_compilar = Botao(PAINEL_X + 180, btn_y, 160, btn_h, "Compilar")
-    btn_executar = Botao(PAINEL_X + 360, btn_y, 160, btn_h, "Executar")
+    btn_reset = Botao(PAINEL_X, BTN_Y, BTN_W, BTN_H, "Reset")
+    btn_compilar = Botao(PAINEL_X + (BTN_W + BTN_GAP), BTN_Y, BTN_W, BTN_H, "Compilar")
+    btn_executar = Botao(PAINEL_X + 2 * (BTN_W + BTN_GAP), BTN_Y, BTN_W, BTN_H, "Executar")
+    btn_voltar = Botao(PAINEL_X + 3 * (BTN_W + BTN_GAP), BTN_Y, BTN_W, BTN_H, "Voltar")
 
     rodando = True
 
@@ -421,6 +424,9 @@ def tela_jogo():
                     simulador.status = "Compile o script antes de executar."
                     simulador.cor_status = COR_ERRO
 
+            elif btn_voltar.clicou(evento):
+                return "menu"
+
             elif btn_reset.clicou(evento):
                 simulador.resetar()
 
@@ -440,6 +446,22 @@ def tela_jogo():
         btn_reset.desenhar(TELA, mouse)
         btn_compilar.desenhar(TELA, mouse)
         btn_executar.desenhar(TELA, mouse)
+        btn_voltar.desenhar(TELA, mouse)
 
         pygame.display.flip()
         CLOCK.tick(FPS)
+def executar_app():
+    while True:
+        if not tela_inicial():
+            break
+
+        resultado = tela_jogo()
+
+        if resultado != "menu":
+            break
+
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    executar_app()
