@@ -1,15 +1,19 @@
 import pygame
-import sys
+
 from interface import tela_inicial, tela_jogo
 
 pygame.init()
 
-def main():
-    if tela_inicial():
-        tela_jogo()
+def executar_app():
+    rodando = True
 
-    pygame.quit()
-    sys.exit()
+    while rodando:
+        iniciar = tela_inicial()
+
+        if not iniciar:
+            break 
+
+        tela_jogo() 
 
 if __name__ == "__main__":
-    main()
+    executar_app()
