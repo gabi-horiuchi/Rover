@@ -7,7 +7,7 @@ Simulador de Rover Espacial desenvolvido em Python + Pygame.
 
 - Python 3.13
 - Pygame
-- 
+
 Para executar:
 1- Acesse a pasta
     cd rover
