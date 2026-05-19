@@ -14,6 +14,9 @@ pygame.display.set_caption("Rover Espacial - PROJETO ARES")
 CLOCK = pygame.time.Clock()
 FPS = 60
 
+BACKSPACE_DELAY_INICIAL = 350
+BACKSPACE_INTERVALO = 45
+
 
 GRID_COLS = 12
 GRID_ROWS = 12
@@ -89,6 +92,13 @@ REPEAT 2 {
 DETECT
 RECUA 1
 """
+
+
+def apagar_ultimo_caractere(texto):
+    if not texto:
+        return texto
+
+    return texto[:-1]
 
 
 class Botao:
@@ -343,6 +353,9 @@ def tela_inicial():
 def tela_jogo():
     script = SCRIPT_EXEMPLO
     scroll_script = 0
+    backspace_pressionado = False
+    backspace_inicio_tick = 0
+    backspace_ultimo_tick = 0
     simulador = SimuladorRover()
 
     btn_reset = Botao(PAINEL_X, BTN_Y, BTN_W, BTN_H, "Reset")
@@ -370,7 +383,11 @@ def tela_jogo():
 
             elif evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_BACKSPACE:
-                    script = script[:-1]
+                    script = apagar_ultimo_caractere(script)
+                    agora = pygame.time.get_ticks()
+                    backspace_pressionado = True
+                    backspace_inicio_tick = agora
+                    backspace_ultimo_tick = agora
 
                 elif evento.key == pygame.K_TAB:
                     script += "    "
@@ -399,6 +416,10 @@ def tela_jogo():
 
                         if len(script.splitlines()) > 11:
                             scroll_script = max_scroll
+
+            elif evento.type == pygame.KEYUP:
+                if evento.key == pygame.K_BACKSPACE:
+                    backspace_pressionado = False
 
             elif btn_compilar.clicou(evento):
                 simulador.resetar()
@@ -429,6 +450,20 @@ def tela_jogo():
 
             elif btn_reset.clicou(evento):
                 simulador.resetar()
+
+        teclas = pygame.key.get_pressed()
+
+        if backspace_pressionado and not teclas[pygame.K_BACKSPACE]:
+            backspace_pressionado = False
+
+        if backspace_pressionado and script:
+            agora = pygame.time.get_ticks()
+            passou_delay = agora - backspace_inicio_tick >= BACKSPACE_DELAY_INICIAL
+            passou_intervalo = agora - backspace_ultimo_tick >= BACKSPACE_INTERVALO
+
+            if passou_delay and passou_intervalo:
+                script = apagar_ultimo_caractere(script)
+                backspace_ultimo_tick = agora
 
         total_linhas = len(script.splitlines())
         max_scroll = max(0, total_linhas - 11)
