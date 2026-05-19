@@ -1,12 +1,14 @@
 import re
 
-REGEX_AVANCA = re.compile(r"^AVANCA\s+(\d+)$")
-REGEX_RECUA = re.compile(r"^RECUA\s+(\d+)$")
-REGEX_LEFT = re.compile(r"^LEFT$")
-REGEX_RIGHT = re.compile(r"^RIGHT$")
-REGEX_DETECT = re.compile(r"^DETECT$")
-REGEX_IF = re.compile(r"^IF\s+OBSTACLE\s+THEN\s+RIGHT$")
-REGEX_REPEAT = re.compile(r"^REPEAT\s+(\d+)\s*\{$")
+REGEX_FLAGS = re.IGNORECASE
+
+REGEX_AVANCA = re.compile(r"^AVANCA\s+(?P<passos>\d+)$", REGEX_FLAGS)
+REGEX_RECUA = re.compile(r"^RECUA\s+(?P<passos>\d+)$", REGEX_FLAGS)
+REGEX_LEFT = re.compile(r"^LEFT$", REGEX_FLAGS)
+REGEX_RIGHT = re.compile(r"^RIGHT$", REGEX_FLAGS)
+REGEX_DETECT = re.compile(r"^DETECT$", REGEX_FLAGS)
+REGEX_IF = re.compile(r"^IF\s+OBSTACLE\s+THEN\s+RIGHT$", REGEX_FLAGS)
+REGEX_REPEAT = re.compile(r"^REPEAT\s+(?P<qtd>\d+)\s*\{$", REGEX_FLAGS)
 REGEX_FECHA = re.compile(r"^\}$")
 
 
@@ -14,11 +16,15 @@ class ParseError(Exception):
     pass
 
 
+def remover_comentario(linha):
+    return linha.split("#", 1)[0].strip()
+
+
 def normalizar_linhas(script):
     linhas = []
 
     for i, linha in enumerate(script.splitlines(), start=1):
-        limpa = linha.strip()
+        limpa = remover_comentario(linha)
 
         if limpa:
             linhas.append((i, limpa))
@@ -33,12 +39,15 @@ def parse_bloco(linhas, inicio=0, exige_fechamento=False):
     while i < len(linhas):
         num_linha, linha = linhas[i]
 
-        if REGEX_FECHA.match(linha):
-            return comandos, i + 1
+        if REGEX_FECHA.fullmatch(linha):
+            if exige_fechamento:
+                return comandos, i + 1
 
-        m = REGEX_AVANCA.match(linha)
+            raise ParseError(f"Linha {num_linha}: fechamento inesperado -> '{linha}'")
+
+        m = REGEX_AVANCA.fullmatch(linha)
         if m:
-            n = int(m.group(1))
+            n = int(m.group("passos"))
 
             if n <= 0:
                 raise ParseError(f"Linha {num_linha}: AVANCA precisa de número maior que 0.")
@@ -47,9 +56,9 @@ def parse_bloco(linhas, inicio=0, exige_fechamento=False):
             i += 1
             continue
 
-        m = REGEX_RECUA.match(linha)
+        m = REGEX_RECUA.fullmatch(linha)
         if m:
-            n = int(m.group(1))
+            n = int(m.group("passos"))
 
             if n <= 0:
                 raise ParseError(f"Linha {num_linha}: RECUA precisa de número maior que 0.")
@@ -58,29 +67,29 @@ def parse_bloco(linhas, inicio=0, exige_fechamento=False):
             i += 1
             continue
 
-        if REGEX_LEFT.match(linha):
+        if REGEX_LEFT.fullmatch(linha):
             comandos.append(("LEFT", None, num_linha))
             i += 1
             continue
 
-        if REGEX_RIGHT.match(linha):
+        if REGEX_RIGHT.fullmatch(linha):
             comandos.append(("RIGHT", None, num_linha))
             i += 1
             continue
 
-        if REGEX_DETECT.match(linha):
+        if REGEX_DETECT.fullmatch(linha):
             comandos.append(("DETECT", None, num_linha))
             i += 1
             continue
 
-        if REGEX_IF.match(linha):
+        if REGEX_IF.fullmatch(linha):
             comandos.append(("IF_OBSTACLE_THEN_RIGHT", None, num_linha))
             i += 1
             continue
 
-        m = REGEX_REPEAT.match(linha)
+        m = REGEX_REPEAT.fullmatch(linha)
         if m:
-            qtd = int(m.group(1))
+            qtd = int(m.group("qtd"))
 
             if qtd <= 0:
                 raise ParseError(f"Linha {num_linha}: REPEAT precisa de número maior que 0.")
@@ -108,7 +117,7 @@ def validar_e_compilar(script):
 
     if idx != len(linhas):
         num_linha, linha = linhas[idx]
-        raise ParseError(f"Linha {num_linha}: fechamento inesperado -> '{linha}'")
+        raise ParseError(f"Linha {num_linha}: sintaxe inválida -> '{linha}'")
 
     return comandos
 
