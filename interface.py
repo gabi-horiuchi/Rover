@@ -36,7 +36,7 @@ PAINEL_W = LARGURA - PAINEL_X - MARGEM
 PAINEL_H = 480
 
 LEGENDA_Y = GRID_Y + GRID_H + 14
-LEGENDA_H = 88
+LEGENDA_H = 120
 
 BTN_Y = PAINEL_Y + PAINEL_H + 18
 BTN_W = 150
@@ -134,6 +134,31 @@ def desenhar_estrelas(tela):
 
 
 def desenhar_grid(tela, sim):
+
+    # coordenadas horizontais
+    for x in range(GRID_COLS):
+        texto = FONTE_MINI.render(str(x), True, COR_SUB)
+
+        tela.blit(
+            texto,
+            (
+                GRID_X + x * CELL + CELL // 2 - 4,
+                GRID_Y - 18
+            )
+        )
+
+    # coordenadas verticais
+    for y in range(GRID_ROWS):
+        texto = FONTE_MINI.render(str(y), True, COR_SUB)
+
+        tela.blit(
+            texto,
+            (
+                GRID_X - 18,
+                GRID_Y + y * CELL + CELL // 2 - 6
+            )
+        )
+
     for y in range(GRID_ROWS):
         for x in range(GRID_COLS):
             rect = pygame.Rect(GRID_X + x * CELL, GRID_Y + y * CELL, CELL, CELL)
@@ -141,6 +166,10 @@ def desenhar_grid(tela, sim):
             cor = COR_AREIA if (x + y) % 2 == 0 else COR_AREIA_ESCURA
             pygame.draw.rect(tela, cor, rect)
             pygame.draw.rect(tela, COR_GRADE, rect, 1)
+
+            # destaca posição inicial
+            if (x, y) == (0, 0):
+                pygame.draw.rect(tela, (100, 180, 120), rect, 3)
 
             if (x, y) in sim.obstaculos:
                 pygame.draw.circle(tela, COR_OBS, rect.center, CELL // 3)
@@ -170,6 +199,16 @@ def desenhar_grid(tela, sim):
     pygame.draw.line(tela, COR_LUZ, (rx, ry), (ponta_x, ponta_y), 2)
     pygame.draw.circle(tela, COR_LUZ, (ponta_x, ponta_y), 3)
 
+    # destaca célula atual do rover
+    rover_rect = pygame.Rect(
+        GRID_X + sim.rover.x * CELL,
+        GRID_Y + sim.rover.y * CELL,
+        CELL,
+        CELL
+    )
+
+    pygame.draw.rect(tela, COR_LUZ, rover_rect, 2)
+
     titulo = FONTE_TITULO.render("PROJETO ARES - BASE LUNAR 2D", True, COR_TEXTO)
     tela.blit(titulo, (GRID_X, 35))
 
@@ -188,6 +227,7 @@ def desenhar_painel(tela, script, sim, scroll_script=0):
     pygame.draw.rect(tela, COR_PAINEL_BORDA, editor, 1, border_radius=10)
 
     linhas = script.splitlines()
+
     if not linhas:
         linhas = [""]
 
@@ -213,7 +253,14 @@ def desenhar_painel(tela, script, sim, scroll_script=0):
         True,
         COR_SUB
     )
-    tela.blit(info_scroll, (editor.x + 20, editor.y + editor.h - 18))
+
+    tela.blit(
+    info_scroll,
+    (
+         editor.x + editor.w - 175,
+        editor.y + editor.h - 20
+    )
+)
 
     seta = FONTE_MEDIA.render("↑↓", True, COR_LUZ)
     tela.blit(seta, (editor.x + editor.w - 35, editor.y + editor.h - 25))
@@ -221,7 +268,8 @@ def desenhar_painel(tela, script, sim, scroll_script=0):
     status_txt = FONTE_MEDIA.render(sim.status[:58], True, sim.cor_status)
     tela.blit(status_txt, (PAINEL_X + 12, PAINEL_Y + 222))
 
-    estado_box = pygame.Rect(PAINEL_X + 12, PAINEL_Y + 252, PAINEL_W - 24, 82)
+    estado_box = pygame.Rect(PAINEL_X + 12, PAINEL_Y + 252, PAINEL_W - 24, 105)
+
     pygame.draw.rect(tela, (18, 20, 28), estado_box, border_radius=10)
     pygame.draw.rect(tela, COR_PAINEL_BORDA, estado_box, 1, border_radius=10)
 
@@ -229,13 +277,26 @@ def desenhar_painel(tela, script, sim, scroll_script=0):
         f"Posição: ({sim.rover.x}, {sim.rover.y})",
         f"Direção: {sim.rover.direcao}",
         f"Próxima instrução: {sim.indice + 1 if sim.indice < len(sim.comandos) else '-'}",
+        f"Comandos executados: {sim.indice}/{len(sim.comandos)}",
     ]
 
     for idx, info in enumerate(infos):
-        render = FONTE_MEDIA.render(info, True, COR_TEXTO)
-        tela.blit(render, (estado_box.x + 10, estado_box.y + 8 + idx * 23))
+
+        # limita tamanho do texto
+        texto = info[:42]
+
+        render = FONTE_PEQUENA.render(texto, True, COR_TEXTO)
+
+        tela.blit(
+            render,
+            (
+                estado_box.x + 10,
+                estado_box.y + 8 + idx * 22
+            )
+        )
 
     log_box = pygame.Rect(PAINEL_X + 12, PAINEL_Y + 344, PAINEL_W - 24, 118)
+
     pygame.draw.rect(tela, COR_LOG, log_box, border_radius=10)
     pygame.draw.rect(tela, COR_PAINEL_BORDA, log_box, 1, border_radius=10)
 
@@ -246,7 +307,14 @@ def desenhar_painel(tela, script, sim, scroll_script=0):
 
     for i, linha in enumerate(logs_visiveis):
         render = FONTE_MINI.render(linha[:68], True, COR_SUB)
-        tela.blit(render, (log_box.x + 10, log_box.y + 34 + i * 17))
+
+        tela.blit(
+            render,
+            (
+                log_box.x + 10,
+                log_box.y + 34 + i * 17
+            )
+        )
 
 
 def desenhar_legenda(tela):
@@ -258,13 +326,29 @@ def desenhar_legenda(tela):
     titulo = FONTE_MEDIA.render("Comandos válidos:", True, COR_TEXTO)
     tela.blit(titulo, (legenda_box.x + 12, legenda_box.y + 8))
 
-    linha1 = "AVANCA n   RECUA n   LEFT   RIGHT"
-    linha2 = "DETECT   IF OBSTACLE THEN RIGHT"
-    linha3 = "REPEAT n { comandos }"
+    comandos = [
+        "AVANCA n        -> Move para frente",
+        "RECUA n         -> Move para trás",
+        "LEFT / RIGHT    -> Rotaciona rover",
+        "DETECT          -> Detecta obstáculo",
+        "REPEAT n { }    -> Repete comandos"
+    ]
 
-    tela.blit(FONTE_PEQUENA.render(linha1, True, COR_SUB), (legenda_box.x + 12, legenda_box.y + 30))
-    tela.blit(FONTE_PEQUENA.render(linha2, True, COR_SUB), (legenda_box.x + 12, legenda_box.y + 48))
-    tela.blit(FONTE_PEQUENA.render(linha3, True, COR_SUB), (legenda_box.x + 12, legenda_box.y + 66))
+    for i, comando in enumerate(comandos):
+
+        render = FONTE_PEQUENA.render(
+            comando,
+            True,
+            COR_SUB
+        )
+
+        tela.blit(
+            render,
+            (
+                legenda_box.x + 14,
+                legenda_box.y + 30 + i * 16
+            )
+        )
 
 
 def desenhar_tela_inicial(tela, mouse_pos, btn_iniciar, btn_sair):

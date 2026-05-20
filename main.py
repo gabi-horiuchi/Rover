@@ -8,7 +8,7 @@ def executar_app():
     rodando = True
 
     while rodando:
-        iniciar = tela_inicial() 
+        iniciar = tela_inicial()
 
         if not iniciar:
             break 
