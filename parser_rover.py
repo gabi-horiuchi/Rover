@@ -1,4 +1,5 @@
 import re
+from difflib import get_close_matches
 
 REGEX_FLAGS = re.IGNORECASE
 
@@ -14,10 +15,21 @@ REGEX_FECHA = re.compile(r"^\}$")
 
 class ParseError(Exception):
     pass
-
+COMANDOS_VALIDOS = [
+    "AVANCA",
+    "RECUA",
+    "LEFT",
+    "RIGHT",
+    "DETECT",
+    "IF",
+    "REPEAT"
+]
 
 def remover_comentario(linha):
-    return linha.split("#", 1)[0].strip()
+    linha = linha.split("#", 1)[0]
+    linha = linha.split("//", 1)[0]
+
+    return linha.strip()
 
 
 def normalizar_linhas(script):
@@ -25,6 +37,9 @@ def normalizar_linhas(script):
 
     for i, linha in enumerate(script.splitlines(), start=1):
         limpa = remover_comentario(linha)
+
+        # normaliza tabs e múltiplos espaços
+        limpa = re.sub(r"\s+", " ", limpa)
 
         if limpa:
             linhas.append((i, limpa))
