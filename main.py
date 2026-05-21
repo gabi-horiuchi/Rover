@@ -1,19 +1,23 @@
+from interface import tela_inicial, tela_jogo
 import pygame
 
-from interface import tela_inicial, tela_jogo
-
-pygame.init()
 
 def executar_app():
-    rodando = True
 
-    while rodando:
-        iniciar = tela_inicial()
+    while True:
 
-        if not iniciar:
-            break 
+        modo = tela_inicial()
 
-        tela_jogo() 
+        if not modo:
+            break
+
+        resultado = tela_jogo(modo)
+
+        if resultado != "menu":
+            break
+
+    pygame.quit()
+
 
 if __name__ == "__main__":
     executar_app()

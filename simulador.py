@@ -1,4 +1,5 @@
 import pygame
+import random
 from dataclasses import dataclass
 from parser_rover import expandir_comandos
 
@@ -39,17 +40,71 @@ class SimuladorRover:
         self.resetar()
 
     def resetar(self):
+
+        self.obstaculos = {
+            (3, 1), (4, 1), (7, 2), (7, 3),
+            (2, 5), (3, 5), (8, 6),
+            (1, 8), (5, 8), (9, 9), (10, 4)
+        }
+
+        self.objetivo = None
+        self.modo_desafio = False
+
+        self.resetar_estado()
+
+    def gerar_desafio(self):
+
+        self.modo_desafio = True
+
+        self.obstaculos = set()
+
+        for _ in range(12):
+
+            while True:
+
+                x = random.randint(0, GRID_COLS - 1)
+                y = random.randint(0, GRID_ROWS - 1)
+
+                if (x, y) != (0, 0):
+                    self.obstaculos.add((x, y))
+                    break
+
+        while True:
+
+            x = random.randint(0, GRID_COLS - 1)
+            y = random.randint(0, GRID_ROWS - 1)
+
+            if (
+                (x, y) not in self.obstaculos
+                and (x, y) != (0, 0)
+            ):
+                self.objetivo = (x, y)
+                break
+
+        self.resetar_estado()
+
+        self.status = "Modo desafio iniciado."
+        self.cor_status = COR_ALERTA
+
+    def resetar_estado(self):
+
         self.rover = Rover(0, 0, "E")
+
         self.log = ["Sistema pronto."]
         self.comandos = []
+
         self.indice = 0
         self.executando = False
         self.finalizado = False
+
         self.tempo_ultimo_passo = 0
+
         self.status = "Aguardando compilação..."
         self.cor_status = COR_SUB
+
         self.rover_px = float(self.rover.x)
         self.rover_py = float(self.rover.y)
+
         self.angulo_anim = 0.0
         self.velocidade_animacao = 0.14
 

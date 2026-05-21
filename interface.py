@@ -1,4 +1,5 @@
 import pygame
+import random
 from math import cos, sin, radians
 
 from simulador import SimuladorRover
@@ -6,6 +7,8 @@ from parser_rover import validar_e_compilar, ParseError
 
 pygame.init()
 pygame.font.init()
+pygame.mixer.init()
+print("Mixer iniciado")
 
 LARGURA = 1300
 ALTURA = 700
@@ -78,6 +81,16 @@ FONTE_PEQUENA = pygame.font.SysFont("consolas", 15)
 FONTE_MINI = pygame.font.SysFont("consolas", 13)
 FONTE_TITULO = pygame.font.SysFont("consolas", 28, bold=True)
 FONTE_TITULO_GRANDE = pygame.font.SysFont("consolas", 44, bold=True)
+
+SOM_MOVIMENTO = pygame.mixer.Sound("assets/sounds/move.mp3")
+SOM_ERRO = pygame.mixer.Sound("assets/sounds/error.mp3")
+SOM_CLICK = pygame.mixer.Sound("assets/sounds/click.mp3")
+SOM_VITORIA = pygame.mixer.Sound("assets/sounds/victory.mp3")
+
+SOM_MOVIMENTO.set_volume(0.2)
+SOM_ERRO.set_volume(0.4)
+SOM_CLICK.set_volume(0.2)
+SOM_VITORIA.set_volume(0.5)
 
 SCRIPT_EXEMPLO = """AVANCA 2
 RIGHT
@@ -172,8 +185,45 @@ def desenhar_grid(tela, sim):
                 pygame.draw.rect(tela, (100, 180, 120), rect, 3)
 
             if (x, y) in sim.obstaculos:
-                pygame.draw.circle(tela, COR_OBS, rect.center, CELL // 3)
-                pygame.draw.circle(tela, (120, 120, 130), rect.center, CELL // 4, 2)
+                centro_x, centro_y = rect.center
+
+                pygame.draw.ellipse(
+                    tela,
+                    (40, 40, 45),
+                    (centro_x - 14, centro_y + 8, 28, 10)
+                    )
+
+                pontos = [
+                        (centro_x - 10, centro_y + 6),
+                        (centro_x - 14, centro_y - 2),
+                        (centro_x - 8, centro_y - 11),
+                        (centro_x + 2, centro_y - 13),
+                        (centro_x + 12, centro_y - 6),
+                        (centro_x + 13, centro_y + 4),
+                        (centro_x + 4, centro_y + 11),
+                        (centro_x - 6, centro_y + 12),
+                    ]
+
+                pygame.draw.polygon(
+                        tela,
+                        (70, 70, 78),
+                        pontos
+                    )
+
+                pygame.draw.circle(
+                        tela,
+                        (120, 120, 130),
+                        (centro_x - 3, centro_y - 4),
+                        4
+                    )
+
+                pygame.draw.line(
+                        tela,
+                        (45, 45, 50),
+                        (centro_x - 4, centro_y - 3),
+                        (centro_x + 5, centro_y + 4),
+                        2
+                    )
 
     rx = GRID_X + int(sim.rover_px * CELL) + CELL // 2
     ry = GRID_Y + int(sim.rover_py * CELL) + CELL // 2
@@ -198,6 +248,28 @@ def desenhar_grid(tela, sim):
 
     pygame.draw.line(tela, COR_LUZ, (rx, ry), (ponta_x, ponta_y), 2)
     pygame.draw.circle(tela, COR_LUZ, (ponta_x, ponta_y), 3)
+
+    # desenha objetivo do modo desafio
+    if sim.objetivo:
+
+        ox, oy = sim.objetivo
+
+        centro_x = GRID_X + ox * CELL + CELL // 2
+        centro_y = GRID_Y + oy * CELL + CELL // 2
+
+        pygame.draw.circle(
+            tela,
+            (255, 215, 0),
+            (centro_x, centro_y),
+            10
+        )
+
+        pygame.draw.circle(
+            tela,
+            (255, 240, 120),
+            (centro_x, centro_y),
+            5
+        )
 
     # destaca célula atual do rover
     rover_rect = pygame.Rect(
@@ -237,10 +309,39 @@ def desenhar_painel(tela, script, sim, scroll_script=0):
     y = editor.y + 8
 
     for i, linha in enumerate(linhas_visiveis):
-        numero = str(scroll_script + i + 1).rjust(2)
+
+        linha_real = scroll_script + i
+
+        numero = str(linha_real + 1).rjust(2)
         texto = f"{numero} | {linha}"
 
-        render = FONTE_PEQUENA.render(texto[:75], True, COR_TEXTO)
+        cor_texto = COR_TEXTO
+
+        # linha atual sendo executada
+        if linha_real == sim.indice and sim.executando:
+            
+            destaque = pygame.Rect(
+                editor.x + 4,
+                y - 1,
+                editor.w - 8,
+                18
+            )
+
+            pygame.draw.rect(
+                tela,
+                (70, 140, 90),
+                destaque,
+                border_radius=4
+            )
+
+            cor_texto = COR_BRANCO
+
+        # linhas já executadas
+        elif linha_real < sim.indice:
+            cor_texto = (140, 140, 150)
+
+        render = FONTE_PEQUENA.render(texto[:75], True, cor_texto)
+
         tela.blit(render, (editor.x + 10, y))
 
         y += 17
@@ -351,7 +452,7 @@ def desenhar_legenda(tela):
         )
 
 
-def desenhar_tela_inicial(tela, mouse_pos, btn_iniciar, btn_sair):
+def desenhar_tela_inicial(tela, mouse_pos, btn_iniciar, btn_desafio, btn_sair):
     tela.fill(COR_FUNDO)
     desenhar_estrelas(tela)
 
@@ -380,7 +481,7 @@ def desenhar_tela_inicial(tela, mouse_pos, btn_iniciar, btn_sair):
     tela.blit(descricao, descricao.get_rect(center=(LARGURA // 2, 250)))
 
     rx = LARGURA // 2
-    ry = 380
+    ry = 340
 
     pygame.draw.ellipse(tela, (35, 35, 40), (rx - 55, ry + 38, 110, 20))
     pygame.draw.rect(tela, COR_ROVER, (rx - 35, ry, 70, 30), border_radius=6)
@@ -395,64 +496,201 @@ def desenhar_tela_inicial(tela, mouse_pos, btn_iniciar, btn_sair):
     pygame.draw.line(tela, COR_LUZ, (rx + 15, ry + 12), (rx + 70, ry - 6), 3)
     pygame.draw.circle(tela, COR_LUZ, (rx + 70, ry - 6), 4)
 
-    info1 = FONTE_MEDIA.render("• Compile scripts", True, COR_TEXTO)
-    info2 = FONTE_MEDIA.render("• Execute automaticamente", True, COR_TEXTO)
-    info3 = FONTE_MEDIA.render("• Desvie de obstáculos na Lua", True, COR_TEXTO)
+    texto_info = FONTE_MEDIA.render(
+        "1. Compile scripts  |  2. Execute automaticamente  |  3. Desvie de obstáculos na Lua",
+        True,
+        COR_TEXTO
+    )
 
-    tela.blit(info1, info1.get_rect(center=(LARGURA // 2, 470)))
-    tela.blit(info2, info2.get_rect(center=(LARGURA // 2, 500)))
-    tela.blit(info3, info3.get_rect(center=(LARGURA // 2, 530)))
+    tela.blit(
+        texto_info,
+        texto_info.get_rect(center=(LARGURA // 2, 455))
+)
 
     btn_iniciar.desenhar(tela, mouse_pos)
+    btn_desafio.desenhar(tela, mouse_pos)
     btn_sair.desenhar(tela, mouse_pos)
 
 
 def tela_inicial():
-    btn_iniciar = Botao(LARGURA // 2 - 120, 580, 240, 50, "Iniciar Missão")
-    btn_sair = Botao(LARGURA // 2 - 120, 640, 240, 42, "Sair")
-
+    btn_iniciar = Botao(LARGURA // 2 - 120, 500, 240, 50, "Iniciar Simulação")
+    btn_desafio = Botao(LARGURA // 2 - 120, 560, 240, 50, "Modo missão espacial")
+    btn_sair = Botao(LARGURA // 2 - 120, 620, 240, 42, "Sair")
     rodando = True
 
     while rodando:
         mouse = pygame.mouse.get_pos()
 
         for evento in pygame.event.get():
+            
             if evento.type == pygame.QUIT:
                 rodando = False
 
             if btn_iniciar.clicou(evento):
-                return True
+                SOM_CLICK.play()
+                return "normal"
+
+            if btn_desafio.clicou(evento):
+                SOM_CLICK.play()
+                return "desafio"
 
             if btn_sair.clicou(evento):
+                SOM_CLICK.play()
                 rodando = False
 
-        desenhar_tela_inicial(TELA, mouse, btn_iniciar, btn_sair)
+        desenhar_tela_inicial(TELA, mouse, btn_iniciar, btn_desafio, btn_sair)
 
         pygame.display.flip()
         CLOCK.tick(FPS)
 
     return False
+        
+def desenhar_tela_vitoria(tela, mouse_pos, btn_reiniciar, btn_menu, confetes):
 
+    overlay = pygame.Surface((LARGURA, ALTURA))
+    overlay.set_alpha(180)
+    overlay.fill((0, 0, 0))
 
-def tela_jogo():
+    tela.blit(overlay, (0, 0))
+
+    caixa = pygame.Rect(
+        LARGURA // 2 - 250,
+        ALTURA // 2 - 170,
+        500,
+        340
+    )
+
+    pygame.draw.rect(tela, (25, 28, 40), caixa, border_radius=18)
+    pygame.draw.rect(tela, (255, 215, 0), caixa, 3, border_radius=18)
+
+    titulo = FONTE_TITULO_GRANDE.render(
+        "MISSÃO CONCLUÍDA",
+        True,
+        (255, 215, 0)
+    )
+
+    subtitulo = FONTE_MEDIA.render(
+        "O rover encontrou o objetivo espacial.",
+        True,
+        COR_BRANCO
+    )
+
+    tela.blit(
+        titulo,
+        titulo.get_rect(center=(LARGURA // 2, ALTURA // 2 - 70))
+    )
+
+    tela.blit(
+        subtitulo,
+        subtitulo.get_rect(center=(LARGURA // 2, ALTURA // 2 - 20))
+    )
+
+    btn_reiniciar.desenhar(tela, mouse_pos)
+    btn_menu.desenhar(tela, mouse_pos)
+
+    # confetes
+    for confete in confetes:
+
+        pygame.draw.rect(
+            tela,
+            confete["cor"],
+            (
+                confete["x"],
+                confete["y"],
+                confete["tam"],
+                confete["tam"]
+            )
+        )
+
+        confete["y"] += confete["vel"]
+
+        if confete["y"] > ALTURA:
+            confete["y"] = random.randint(-200, -20)
+   
+def tela_jogo(modo="normal"):
     script = SCRIPT_EXEMPLO
     scroll_script = 0
     backspace_pressionado = False
     backspace_inicio_tick = 0
     backspace_ultimo_tick = 0
+
     simulador = SimuladorRover()
+
+    if modo == "desafio":
+        script = ""
+        simulador.gerar_desafio()
+
+    ultima_posicao = (simulador.rover.x, simulador.rover.y)
 
     btn_reset = Botao(PAINEL_X, BTN_Y, BTN_W, BTN_H, "Reset")
     btn_compilar = Botao(PAINEL_X + (BTN_W + BTN_GAP), BTN_Y, BTN_W, BTN_H, "Compilar")
     btn_executar = Botao(PAINEL_X + 2 * (BTN_W + BTN_GAP), BTN_Y, BTN_W, BTN_H, "Executar")
     btn_voltar = Botao(PAINEL_X + 3 * (BTN_W + BTN_GAP), BTN_Y, BTN_W, BTN_H, "Voltar")
 
+    vitoria = False
+
+    tempo_vitoria = None
+
+    btn_reiniciar = Botao(
+        LARGURA // 2 - 110,
+        ALTURA // 2 + 40,
+        220,
+        50,
+        "Nova missão"
+    )
+
+    btn_menu_vitoria = Botao(
+        LARGURA // 2 - 110,
+        ALTURA // 2 + 105,
+        220,
+        50,
+        "Voltar ao menu"
+    )
+
     rodando = True
+
+    confetes = []
+
+    for i in range(120):
+
+        confetes.append({
+            "x": random.randint(0, LARGURA),
+            "y": random.randint(-ALTURA, 0),
+            "vel": random.randint(3, 8),
+            "tam": random.randint(4, 8),
+            "cor": random.choice([
+                (255, 80, 80),
+                (80, 255, 120),
+                (80, 180, 255),
+                (255, 220, 70),
+                (255, 120, 255)
+            ])
+        })
 
     while rodando:
         mouse = pygame.mouse.get_pos()
 
         for evento in pygame.event.get():
+
+            if vitoria:
+
+                if btn_reiniciar.clicou(evento):
+
+                    SOM_CLICK.play()
+
+                    simulador = SimuladorRover()
+                    simulador.gerar_desafio()
+
+                    script = ""
+                    vitoria = False
+
+                elif btn_menu_vitoria.clicou(evento):
+
+                    SOM_CLICK.play()
+                    return "menu"
+
+                continue
+
             if evento.type == pygame.QUIT:
                 rodando = False
 
@@ -506,13 +744,17 @@ def tela_jogo():
                     backspace_pressionado = False
 
             elif btn_compilar.clicou(evento):
-                simulador.resetar()
 
+                SOM_CLICK.play()
+
+                simulador.resetar_estado()
                 try:
                     arvore = validar_e_compilar(script)
                     simulador.carregar_programa(arvore)
 
                 except ParseError as e:
+                    SOM_ERRO.play()
+
                     simulador.status = str(e)
                     simulador.cor_status = COR_ERRO
                     simulador.log.append("Erro de compilação.")
@@ -520,6 +762,9 @@ def tela_jogo():
             elif btn_executar.clicou(evento):
                 if simulador.comandos:
                     simulador.executando = True
+
+                    SOM_CLICK.play()
+
                     simulador.finalizado = False
                     simulador.status = "Executando..."
                     simulador.cor_status = COR_ALERTA
@@ -530,10 +775,19 @@ def tela_jogo():
                     simulador.cor_status = COR_ERRO
 
             elif btn_voltar.clicou(evento):
+                SOM_CLICK.play()
                 return "menu"
 
             elif btn_reset.clicou(evento):
-                simulador.resetar()
+
+                SOM_CLICK.play()
+
+                simulador.resetar_estado()
+
+                if simulador.modo_desafio:
+                    script = ""
+                else:
+                    script = SCRIPT_EXEMPLO
 
         teclas = pygame.key.get_pressed()
 
@@ -555,6 +809,40 @@ def tela_jogo():
 
         simulador.atualizar()
 
+        # vitória modo desafio
+        if (
+            not vitoria
+            and tempo_vitoria is None
+            and simulador.modo_desafio
+            and simulador.objetivo
+            and (simulador.rover.x, simulador.rover.y) == simulador.objetivo
+        ):
+
+            simulador.executando = False
+
+            tempo_vitoria = pygame.time.get_ticks()
+
+        if tempo_vitoria is not None and not vitoria:
+
+            agora = pygame.time.get_ticks()
+
+            if agora - tempo_vitoria >= 500:
+
+                SOM_VITORIA.play()
+
+                vitoria = True
+
+        posicao_atual = (simulador.rover.x, simulador.rover.y)
+
+        if posicao_atual != ultima_posicao:
+
+
+            pygame.time.delay(100)
+
+            SOM_MOVIMENTO.play()
+
+            ultima_posicao = posicao_atual
+
         TELA.fill(COR_FUNDO)
 
         desenhar_estrelas(TELA)
@@ -567,14 +855,26 @@ def tela_jogo():
         btn_executar.desenhar(TELA, mouse)
         btn_voltar.desenhar(TELA, mouse)
 
+        if vitoria:
+            desenhar_tela_vitoria(
+                TELA,
+                mouse,
+                btn_reiniciar,
+                btn_menu_vitoria,
+                confetes
+    )
+
         pygame.display.flip()
-        CLOCK.tick(FPS)
+        CLOCK.tick(FPS) 
+
 def executar_app():
     while True:
-        if not tela_inicial():
+        modo = tela_inicial()
+
+        if not modo:
             break
 
-        resultado = tela_jogo()
+        resultado = tela_jogo(modo)
 
         if resultado != "menu":
             break
