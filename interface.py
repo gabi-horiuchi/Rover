@@ -683,6 +683,24 @@ def tela_jogo(modo="normal"):
 
                     script = ""
                     vitoria = False
+                    tempo_vitoria = None  # 🔥 IMPORTANTE RESETAR
+
+                    confetes = []  # 🔥 limpa confetes
+
+                    for i in range(120):
+                        confetes.append({
+                            "x": random.randint(0, LARGURA),
+                            "y": random.randint(-ALTURA, 0),
+                            "vel": random.randint(3, 8),
+                            "tam": random.randint(4, 8),
+                            "cor": random.choice([
+                                (255, 80, 80),
+                                (80, 255, 120),
+                                (80, 180, 255),
+                                (255, 220, 70),
+                                (255, 120, 255)
+                            ])
+                        })
 
                 elif btn_menu_vitoria.clicou(evento):
 
