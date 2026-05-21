@@ -683,9 +683,9 @@ def tela_jogo(modo="normal"):
 
                     script = ""
                     vitoria = False
-                    tempo_vitoria = None  # 🔥 IMPORTANTE RESETAR
+                    tempo_vitoria = None 
 
-                    confetes = []  # 🔥 limpa confetes
+                    confetes = [] 
 
                     for i in range(120):
                         confetes.append({
