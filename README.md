@@ -10,29 +10,29 @@ Simulador de Rover Espacial desenvolvido em Python + Pygame.
 
 Para executar:
 1- Acesse a pasta
-    cd rover
 2-Instale as dependências
   pip install pygame
 3-Execute o projeto
   python main.py
 
 Exemplo de Script
-AVANCA 3
+FRONT 3
 RIGHT
-AVANCA 2
+FRONT 2
 DETECT
 
 IF OBSTACLE THEN RIGHT
 
 REPEAT 2 {
-    AVANCA 1
+    FRONT 1
     LEFT
 }
+BACK 1
 
 Comandos Disponíveis
 Comando	  Função
-AVANCA n	Move o rover para frente
-RECUA n   Move o rover para trás
+FRONT n	Move o rover para frente
+BACK n   Move o rover para trás
 LEFT	    Gira para esquerda
 RIGHT    	Gira para direita
 DETECT	  Detecta obstáculos
@@ -41,4 +41,4 @@ IF OBSTACLE THEN RIGHT	Desvia de obstáculos
 
 Status do Projeto
 
-Em desenvolvimento
+CONCLUIDO
