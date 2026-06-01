@@ -92,18 +92,18 @@ SOM_ERRO.set_volume(0.4)
 SOM_CLICK.set_volume(0.2)
 SOM_VITORIA.set_volume(0.5)
 
-SCRIPT_EXEMPLO = """AVANCA 2
+SCRIPT_EXEMPLO = """FRONT 2
 RIGHT
-AVANCA 3
+FRONT 3
 IF OBSTACLE THEN RIGHT
-AVANCA 2
+FRONT 2
 REPEAT 2 {
     LEFT
-    AVANCA 1
+    FRONT 1
     RIGHT
 }
 DETECT
-RECUA 1
+BACK 1
 """
 
 
@@ -428,8 +428,8 @@ def desenhar_legenda(tela):
     tela.blit(titulo, (legenda_box.x + 12, legenda_box.y + 8))
 
     comandos = [
-        "AVANCA n        -> Move para frente",
-        "RECUA n         -> Move para trás",
+        "FRONT n        -> Move para frente",
+        "BACK n         -> Move para trás",
         "LEFT / RIGHT    -> Rotaciona rover",
         "DETECT          -> Detecta obstáculo",
         "REPEAT n { }    -> Repete comandos"

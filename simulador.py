@@ -174,15 +174,15 @@ class SimuladorRover:
         nome = cmd[0]
         linha = cmd[-1]
 
-        if nome == "AVANCA":
+        if nome == "FRONT":
             n = cmd[1]
             ok = self.mover(n, True)
-            self.log.append(f"Linha {linha}: AVANCA {n} -> {'OK' if ok else 'BLOQUEADO'}")
+            self.log.append(f"Linha {linha}: FRONT {n} -> {'OK' if ok else 'BLOQUEADO'}")
 
-        elif nome == "RECUA":
+        elif nome == "BACK":
             n = cmd[1]
             ok = self.mover(n, False)
-            self.log.append(f"Linha {linha}: RECUA {n} -> {'OK' if ok else 'BLOQUEADO'}")
+            self.log.append(f"Linha {linha}: BACK {n} -> {'OK' if ok else 'BLOQUEADO'}")
 
         elif nome == "LEFT":
             self.girar_esquerda()

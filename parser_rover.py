@@ -3,8 +3,8 @@ from difflib import get_close_matches
 
 REGEX_FLAGS = re.IGNORECASE
 
-REGEX_AVANCA = re.compile(r"^AVANCA\s+(?P<passos>\d+)$", REGEX_FLAGS)
-REGEX_RECUA = re.compile(r"^RECUA\s+(?P<passos>\d+)$", REGEX_FLAGS)
+REGEX_FRONT = re.compile(r"^FRONT\s+(?P<passos>\d+)$", REGEX_FLAGS)
+REGEX_BACK = re.compile(r"^BACK\s+(?P<passos>\d+)$", REGEX_FLAGS)
 REGEX_LEFT = re.compile(r"^LEFT$", REGEX_FLAGS)
 REGEX_RIGHT = re.compile(r"^RIGHT$", REGEX_FLAGS)
 REGEX_DETECT = re.compile(r"^DETECT$", REGEX_FLAGS)
@@ -16,8 +16,8 @@ REGEX_FECHA = re.compile(r"^\}$")
 class ParseError(Exception):
     pass
 COMANDOS_VALIDOS = [
-    "AVANCA",
-    "RECUA",
+    "FRONT",
+    "BACK",
     "LEFT",
     "RIGHT",
     "DETECT",
@@ -60,25 +60,25 @@ def parse_bloco(linhas, inicio=0, exige_fechamento=False):
 
             raise ParseError(f"Linha {num_linha}: fechamento inesperado -> '{linha}'")
 
-        m = REGEX_AVANCA.fullmatch(linha)
+        m = REGEX_FRONT.fullmatch(linha)
         if m:
             n = int(m.group("passos"))
 
             if n <= 0:
-                raise ParseError(f"Linha {num_linha}: AVANCA precisa de número maior que 0.")
+                raise ParseError(f"Linha {num_linha}: FRONT precisa de número maior que 0.")
 
-            comandos.append(("AVANCA", n, num_linha))
+            comandos.append(("FRONT", n, num_linha))
             i += 1
             continue
 
-        m = REGEX_RECUA.fullmatch(linha)
+        m = REGEX_BACK.fullmatch(linha)
         if m:
             n = int(m.group("passos"))
 
             if n <= 0:
-                raise ParseError(f"Linha {num_linha}: RECUA precisa de número maior que 0.")
+                raise ParseError(f"Linha {num_linha}: BACK precisa de número maior que 0.")
 
-            comandos.append(("RECUA", n, num_linha))
+            comandos.append(("BACK", n, num_linha))
             i += 1
             continue
 
